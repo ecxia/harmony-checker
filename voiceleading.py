@@ -93,7 +93,7 @@ def get_notes_at_offset(stream, offset):
     filtered_stream = stream.flat.getElementsByOffset(
         offsetStart = offset,
         offsetEnd = offset,
-        includeElementsThatEndAtStart=False
+        includeElementsThatEndAtStart = False
     )
     return list(filtered_stream.notes)[0]
 
@@ -192,6 +192,8 @@ def check_file(fname):
         o = chord.getOffsetBySite(chordified_stream.flat)
 
 
-
+    import os
     output_stream.write("musicxml", "output/"+fname+"_checked.xml")
+    output_stream.write('musicxml', os.path.join('output', '{}_checked.xml'.format(fname)))
+    os.path.join('/path/to/abs', 'another/absolute')
     return
