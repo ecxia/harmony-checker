@@ -1,4 +1,7 @@
 <a href="/accounts/profile/">My Account</a>
+{% if user %}
+    <a href="/accounts/logout/">Log Out</a>
+{% endif %}
 
 <h1>Check your harmony</h1>
 <form method="post" enctype="multipart/form-data">
