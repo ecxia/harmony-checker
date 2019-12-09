@@ -146,14 +146,17 @@ def get_parallel_octaves(stream, chordified_stream):
     return process_vlqs(lambda vlq: vlq.parallelOctave(), stream, chordified_stream)
 
 
+# rewrite so focuses on outer voices
 def get_hidden_fifths(stream, chordified_stream):
     return process_vlqs(lambda vlq: vlq.hiddenFifth(), stream, chordified_stream)
 
 
+# rewrite so focuses on outer voices
 def get_hidden_octaves(stream, chordified_stream):
     return process_vlqs(lambda vlq: vlq.hiddenOctave(), stream, chordified_stream)
 
 
+# rewrite so focuses on outer voices
 def get_crossed_voices(stream, chordified_stream):
     return process_vlqs(lambda vlq: vlq.voiceCrossing(), stream, chordified_stream)
 
@@ -249,9 +252,9 @@ def check_file(fname):
 
     end_height = write_helper(get_crossed_voices, "Voice Crossing ->", end_height)
 
-    output_stream.write("musicxml", fname[:-4] + "_checked.xml")
+#    output_stream.write("musicxml", fname[:-4] + "_checked.xml")
 
-    #    output_stream.write(
-    #        "musicxml", os.path.join("output", "{}_checked.xml".format(fname[:-4]))
-    #    )
+    output_stream.write(
+        "musicxml", os.path.join("output", "{}_checked.xml".format(fname[:-4]))
+        )
     return

@@ -1,0 +1,9 @@
+<a href="/accounts/profile/">My Account</a>
+
+<h1>Check your harmony</h1>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <p>{{ score_form.as_p }}</p>
+    <p><input type="submit" value="Check!"/></p>
+</form>
+

@@ -1,0 +1,20 @@
+<a href="/accounts/profile/">My Account</a>
+{% if user %}
+    <a href="/accounts/logout/">Log Out</a>
+{% endif %}
+<h1>Results</h1>
+
+{% if score %}
+    <ul>
+    {% for result in results.all %}
+        <li>{{ result.test.get_name_display }}: 
+        {% if result.passed %} Passed 
+        {% else %} Failed
+        {% endif %}
+        </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No tests selected.</p>
+{% endif %}
+

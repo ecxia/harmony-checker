@@ -8,7 +8,7 @@
   <identification>
     <creator type="composer">Music21</creator>
     <encoding>
-      <encoding-date>2019-10-02</encoding-date>
+      <encoding-date>2019-10-18</encoding-date>
       <software>music21 v.5.7.0</software>
       <software>MuseScore 3.2.3</software>
     </encoding>
@@ -23,10 +23,10 @@
     <score-part id="P1">
       <part-name>Soprano</part-name>
       <part-abbreviation>S.</part-abbreviation>
-      <score-instrument id="I76989037932a99fd820a46d6a169cd99">
+      <score-instrument id="I1df9a76cb69a1b426e9515f9eceba30e">
         <instrument-name>Soprano</instrument-name>
       </score-instrument>
-      <midi-instrument id="I76989037932a99fd820a46d6a169cd99">
+      <midi-instrument id="I1df9a76cb69a1b426e9515f9eceba30e">
         <midi-channel>1</midi-channel>
         <midi-program>53</midi-program>
       </midi-instrument>

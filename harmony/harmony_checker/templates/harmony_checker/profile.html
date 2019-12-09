@@ -1,0 +1,18 @@
+<a href="/harmony_checker/">Check Harmony</a>
+<a href="/accounts/password_change/">Change Password</a>
+<a href="/accounts/logout/">Log Out</a>
+<h1>Profile: {{ user }}</h1>
+
+{% if scores %}
+    <ul>
+    {% for score in scores.all %}
+        <li>
+            <a href="/harmony_checker/{{ score.id  }}/checked">
+                {{ score.score.name }}
+            </a>
+        </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No scores uploaded.</p>
+{% endif %}
