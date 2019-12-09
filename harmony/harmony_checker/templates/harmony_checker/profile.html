@@ -1,9 +1,11 @@
+{% extends 'harmony_checker/base.html' %}
 <a href="/harmony_checker/">Check Harmony</a>
-<a href="/accounts/password_change/">Change Password</a>
 <a href="/accounts/logout/">Log Out</a>
+{% block content %}
 <h1>Profile: {{ user }}</h1>
-
+<a href="/accounts/password_change/">Change Password</a>
 {% if scores %}
+<h2>Scores:</h2>
     <ul>
     {% for score in scores.all %}
         <li>
@@ -16,3 +18,4 @@
 {% else %}
     <p>No scores uploaded.</p>
 {% endif %}
+{% endblock %}

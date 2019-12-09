@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'crispy_forms'
 ]
 
 MIDDLEWARE = [
@@ -125,3 +126,5 @@ MEDIA_ROOT = '/mnt/c/Users/emily/Dropbox/programming/harmony/'
 LOGOUT_REDIRECT_URL = '/harmony_checker/'
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+CRISPY_TEMPLATE_PACK = 'bootstrap4'

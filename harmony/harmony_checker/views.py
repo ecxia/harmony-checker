@@ -37,7 +37,7 @@ def index(request):
             r = Result(score=new_score,test=test)
             r.passed = (len(test_failures) == 0)
             r.save()
-            end_height = voiceleading.annotate_stream(test_failures, stream, end_height)
+            stream, end_height = voiceleading.annotate_stream(test_failures, stream, end_height)
             output_path = os.path.join("{}_checked.xml".format(fname[:-4]))
             stream.write(
                 "musicxml", output_path

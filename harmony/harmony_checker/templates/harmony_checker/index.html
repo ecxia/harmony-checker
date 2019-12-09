@@ -1,12 +1,10 @@
-<a href="/accounts/profile/">My Account</a>
-{% if user %}
-    <a href="/accounts/logout/">Log Out</a>
-{% endif %}
-
-<h1>Check your harmony</h1>
+{% extends 'harmony_checker/base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+<h1>Check Harmony</h1>
 <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
-    <p>{{ score_form.as_p }}</p>
-    <p><input type="submit" value="Check!"/></p>
+    <p>{% crispy score_form %}</p>
+    <p><input type="submit" class="btn btn-primary" value="Check!"/></p>
 </form>
-
+{% endblock %}

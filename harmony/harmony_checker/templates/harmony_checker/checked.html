@@ -1,7 +1,5 @@
-<a href="/accounts/profile/">My Account</a>
-{% if user %}
-    <a href="/accounts/logout/">Log Out</a>
-{% endif %}
+{% extends 'harmony_checker/base.html' %}
+{% block content %}
 <h1>Results</h1>
 
 {% if score %}
@@ -17,4 +15,4 @@
 {% else %}
     <p>No tests selected.</p>
 {% endif %}
-
+{% endblock %}
