@@ -5,6 +5,5 @@
 <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
     <p>{% crispy score_form %}</p>
-    <p><input type="submit" class="btn btn-primary" value="Check!"/></p>
 </form>
 {% endblock %}

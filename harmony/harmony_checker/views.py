@@ -7,10 +7,10 @@ from django.views.static import serve
 from django.conf import settings
 from django.urls import reverse
 from django.shortcuts import get_object_or_404
-from django.contrib.auth import get_user
+from django.contrib.auth import get_user, views as auth_views
 from django.contrib.auth.decorators import login_required
 
-from .forms import ScoreForm
+from .forms import ScoreForm, AuthFormWithSubmit
 from .models import Score, Result
 from . import voiceleading
 
@@ -24,7 +24,8 @@ def index(request):
     if request.method == 'POST':
         score_form = ScoreForm(request.POST, request.FILES)
         new_score = score_form.save()
-        new_score.user = user 
+        if user.is_authenticated:
+            new_score.user = user
         new_score.save()
         fname = str.format('{0}/{1}', settings.MEDIA_ROOT, new_score.score.url)
         stream = m21.converter.parse(fname)
@@ -67,7 +68,7 @@ def index(request):
     return render(
         request, 
         'harmony_checker/index.html', 
-        {'score_form': score_form, 'user': user}
+        {'score_form': score_form, 'user': user, 'title': "Check Harmony"}
     )
 
 def checked(request, score_id):

@@ -16,6 +16,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from harmony_checker.views import profile
+from harmony_checker.forms import AuthFormWithSubmit, PasswordChangeFormWithSubmit, PwdResetFormWithSubmit
+from django.contrib.auth.views import LoginView, PasswordChangeView, PasswordResetView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -23,6 +25,9 @@ urlpatterns = [
         'harmony_checker/', 
         include('harmony_checker.urls', namespace='harmony_checker'),
     ),
+    path('accounts/login/', LoginView.as_view(authentication_form = AuthFormWithSubmit)),
+    path('accounts/password_change/', PasswordChangeView.as_view(form_class = PasswordChangeFormWithSubmit)),
+    path('accounts/password_reset/', PasswordResetView.as_view(form_class = PwdResetFormWithSubmit)),
+    path('accounts/profile/', profile),
     path('accounts/', include('django.contrib.auth.urls')),
-    path('accounts/profile/', profile)
 ]
