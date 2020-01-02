@@ -1,4 +1,4 @@
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.template import loader
 from django.shortcuts import render
 from django.core.files import File
@@ -6,6 +6,7 @@ from django.core.files.uploadedfile import UploadedFile
 from django.views.static import serve
 from django.conf import settings
 from django.urls import reverse
+from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user, views as auth_views
 from django.contrib.auth.decorators import login_required
@@ -26,12 +27,13 @@ def index(request):
         new_score = score_form.save()
         if user.is_authenticated:
             new_score.user = user
+        new_score.score_display_name = os.path.basename(new_score.score.name)
         new_score.save()
         fname = str.format('{0}/{1}', settings.MEDIA_ROOT, new_score.score.url)
         stream = m21.converter.parse(fname)
         end_height = 1
         for test in new_score.tests.all():
-            test_failures = getattr(voiceleading, test.name)(
+            test_failures = getattr(voiceleading, test.func)(
                 stream,
                 chordified_stream=stream.chordify(),
             )
@@ -46,22 +48,11 @@ def index(request):
             with open(output_path) as fp:
                 contents = File(fp)
                 new_score.checked_score.save(output_path, contents)
+            new_score.checked_score_display_name = f"{new_score.score_display_name[:-4]}_checked.xml"
+            new_score.save()
         return HttpResponseRedirect(
             reverse('harmony_checker:checked', args=(new_score.id,))
         )
-
-#         if score_form.is_valid():
-#             input_score = request.FILES.get('score')
-#             data = input_score.read()
-#             f = open('temp_score.xml', 'wb+')
-#             f.write(data)
-#             output_path = check_file('temp_score.xml')
-#             f = open(output_path, 'r')
-#             output_file = File(f)
-#             response = HttpResponse(output_file, content_type='application/xml')
-#             response['Content-Disposition'] = 'attachment; filename="annotated_score.xml'
-# #             close file? - return in with statement
-#            return response
     else:
         score_form = ScoreForm()
 
@@ -75,21 +66,43 @@ def checked(request, score_id):
     user = get_user(request)
     score = get_object_or_404(Score, pk=score_id)
     results = Result.objects.filter(score=score_id)
+
+    #generate checked score display name
     return render(
         request, 
         'harmony_checker/checked.html',
-        {'score': score, 'results': results, 'user': user}
+        {
+            'score': score, 
+            'results': results, 
+            'user': user,
+            'title': 'Results'
+        }
     )
+
+
+def checked_score(request, score_id):
+    score = get_object_or_404(Score, pk=score_id)
+    response = HttpResponse(score.checked_score, content_type='application/xml')
+    response['Content-Disposition'] = f"attachment; filename={score.checked_score_display_name}"
+    return response
+
+
+def score(request, score_id):
+    score = get_object_or_404(Score, pk=score_id)
+    response = HttpResponse(score.score, content_type='application/xml')
+    response['Content-Disposition'] = f"attachment; filename={score.score_display_name}"
+    return response
 
 @login_required
 def profile(request):
     user = get_user(request)
-    scores = Score.objects.filter(user=user)
+    scores = Score.objects.filter(user=user).order_by('-upload_date')
     return render(
         request,
         'harmony_checker/profile.html',
         {
             'user': user, 
-            'scores': scores
+            'scores': scores,
+            'title': "User Profile"
         }
     )

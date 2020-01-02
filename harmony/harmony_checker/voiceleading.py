@@ -271,7 +271,7 @@ def annotate_stream(issues, stream, end_height):
             n1 = get_note_at_offset(part, os[0])
             n2 = get_note_at_offset(part, os[1])
             bracket = music21.spanner.Line(n1, n2, endHeight=end_height)
-            end_height += 1
+            end_height += 2
             part.insert(os[0], bracket)
             n1.addLyric(msg)
     return stream, end_height

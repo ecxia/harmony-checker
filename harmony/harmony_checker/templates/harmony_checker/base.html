@@ -14,14 +14,14 @@
     <!--Nav-->
     <ul class="nav nav-tabs">
         <li class="nav-item">
-        <a class="nav-link" href="/harmony_checker/">Harmony Checker</a>
+        <a class="nav-link" href={% url 'harmony_checker:index' %}>Harmony Checker</a>
         </li>
         <li class="nav-item">
-        <a class="nav-link" href="/accounts/profile">Account</a>
+        <a class="nav-link" href={% url 'profile' %}>Account</a>
         </li>
         {% if user.is_authenticated %}
         <li class="nav-item">
-        <a class="nav-link" href="/accounts/logout">Log Out</a>
+        <a class="nav-link" href={% url 'logout' %}>Log Out</a>
         </li>
         {% endif %}
 </ul>

@@ -25,9 +25,9 @@ urlpatterns = [
         'harmony_checker/', 
         include('harmony_checker.urls', namespace='harmony_checker'),
     ),
-    path('accounts/login/', LoginView.as_view(authentication_form = AuthFormWithSubmit)),
-    path('accounts/password_change/', PasswordChangeView.as_view(form_class = PasswordChangeFormWithSubmit)),
-    path('accounts/password_reset/', PasswordResetView.as_view(form_class = PwdResetFormWithSubmit)),
-    path('accounts/profile/', profile),
+    path('accounts/login/', LoginView.as_view(authentication_form = AuthFormWithSubmit), name='login'),
+    path('accounts/password_change/', PasswordChangeView.as_view(form_class = PasswordChangeFormWithSubmit), name='pwd_change'),
+    path('accounts/password_reset/', PasswordResetView.as_view(form_class = PwdResetFormWithSubmit), name='pwd_reset'),
+    path('accounts/profile/', profile, name='profile'),
     path('accounts/', include('django.contrib.auth.urls')),
 ]
