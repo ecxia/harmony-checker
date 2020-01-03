@@ -1,24 +1,26 @@
 {% extends 'harmony_checker/base.html' %}
 {% block content %}
-<h1>Profile: {{ user }}</h1>
 <a href={% url "pwd_change" %}>Change Password</a>
 {% if scores %}
 <table class="table">
-        <thead><tr>
-        <th scope="col">Score</th>
-        <th scope="col">Upload Date</th> 
-        </tr></thead>
-    <tbody>
-    {% for score in scores.all %}
-        <tr><td><a href={% url "harmony_checker:checked" score.id %}>
-            {{ score.score_display_name }}
-        </a></td> 
-        <td>{{score.upload_date}}</td>
+    <thead>
+        <tr>
+            <th scope="col">Score</th>
+            <th scope="col">Upload Date</th>
         </tr>
-    {% endfor %}
+    </thead>
+    <tbody>
+        {% for score in scores.all %}
+        <tr>
+            <td><a href={% url "harmony_checker:checked" score.id %}>
+                    {{ score.score_display_name }}
+                </a></td>
+            <td>{{score.upload_date}}</td>
+        </tr>
+        {% endfor %}
     </tbody>
-    </table>
+</table>
 {% else %}
-    <p>No scores uploaded.</p>
+<p>No scores uploaded.</p>
 {% endif %}
 {% endblock %}

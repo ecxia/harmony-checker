@@ -1,22 +1,18 @@
-from django.http import HttpResponseRedirect, HttpResponse
-from django.template import loader
-from django.shortcuts import render
-from django.core.files import File
-from django.core.files.uploadedfile import UploadedFile
-from django.views.static import serve
 from django.conf import settings
-from django.urls import reverse
-from django.utils import timezone
-from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user, views as auth_views
 from django.contrib.auth.decorators import login_required
+from django.core.files import File
+from django.http import HttpResponseRedirect, HttpResponse
+from django.shortcuts import render, get_object_or_404
+from django.urls import reverse
+from django.utils import timezone
 
-from .forms import ScoreForm, AuthFormWithSubmit
+from .forms import ScoreForm
 from .models import Score, Result
 from . import voiceleading
 
-import music21 as m21
-import os
+from music21 import converter
+import os.path
 
 # Create your views here.
 
@@ -30,7 +26,7 @@ def index(request):
         new_score.score_display_name = os.path.basename(new_score.score.name)
         new_score.save()
         fname = str.format('{0}/{1}', settings.MEDIA_ROOT, new_score.score.url)
-        stream = m21.converter.parse(fname)
+        stream = converter.parse(fname)
         end_height = 1
         for test in new_score.tests.all():
             test_failures = getattr(voiceleading, test.func)(
