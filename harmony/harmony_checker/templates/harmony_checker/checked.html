@@ -17,7 +17,7 @@
             <tbody>
                 {% for result in results.all %}
                 <tr>
-                    <td>{{ result.test.name }}</td>
+                    <td>{{ result.musical_test.name }}</td>
                     <td>{% if result.passed %} <span class="badge badge-success">Passed</span>
                         {% else %} <span class="badge badge-danger">Failed</span></td>
                     {% endif %}

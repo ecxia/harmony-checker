@@ -10,7 +10,7 @@ from .models import Score
 class ScoreForm(forms.ModelForm):
     class Meta:
         model = Score
-        fields = ['score', 'tests']
+        fields = ['score', 'musical_tests']
     helper = FormHelper()
     helper.add_input(Submit('submit', 'Submit', css_class='btn_primary'))
 

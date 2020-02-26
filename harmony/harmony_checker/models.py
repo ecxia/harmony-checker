@@ -9,7 +9,7 @@ from . import voiceleading
 
 # Create your models here.
 
-class Test(models.Model):
+class MusicalTest(models.Model):
     name = models.CharField(max_length = 50, unique=True)
     func = models.CharField(max_length = 50, unique=True)
 
@@ -19,8 +19,8 @@ class Test(models.Model):
 class Score(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     score = models.FileField(upload_to='uploads/')
-    score_display_name = models.CharField(max_length = 50, null=True)
-    tests = models.ManyToManyField(Test)
+    score_display_name = models.CharField(max_length = 50, default=id)
+    musical_tests = models.ManyToManyField(MusicalTest)
     checked_score = models.FileField(upload_to='checked/',null=True)
     checked_score_display_name = models.CharField(max_length = 50, null=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
@@ -31,8 +31,8 @@ class Score(models.Model):
 
 class Result(models.Model):
     score = models.ForeignKey(Score, on_delete=models.CASCADE)
-    test = models.ForeignKey(Test, on_delete=models.CASCADE)
+    musical_test = models.ForeignKey(MusicalTest, on_delete=models.CASCADE)
     passed = models.BooleanField(null=True)
     
     def __str__(self):
-        return str.format('{0}: {1}', self.score.score.name, self.test.name)
+        return str.format('{0}: {1}', self.score.score_display_name, self.musical_test.name)

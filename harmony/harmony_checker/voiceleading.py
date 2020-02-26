@@ -21,11 +21,11 @@ def get_num_parts(stream, **kwargs):
 # Helper function
 def get_note_at_offset(stream, offset):
     filtered_stream = stream.flat.getElementsByOffset(
-        offsetStart=offset, offsetEnd=offset, includeElementsThatEndAtStart=False
+        offsetStart=offset, offsetEnd=offset, includeElementsThatEndAtStart=False,classList=music21.note.Note,
     )
     notes = list(filtered_stream.notes)
     if len(notes) == 0:
-        return []
+        return None
     return list(filtered_stream.notes)[0]
 
 
@@ -66,7 +66,8 @@ def get_parts_out_of_range(stream, **kwargs):
     problems = []
     for part in parts:
         voice_range = VOICE_RANGES[part["stream"].partAbbreviation]
-        for note in part["stream"].flat.notes:
+        print(part["stream"].flat.notes)
+        for note in part["stream"].getElementsByClass("Note"):
             if (note.pitch < voice_range["min"] or note.pitch > voice_range["max"]):
                 problems.append({
                     "offset": note.getOffsetBySite(stream.flat),
@@ -182,12 +183,13 @@ def process_vlqs(fn, stream, chordified_stream, msg):
         for o1, o2 in zip(offsets[:-1], offsets[1:]):
             n1s = list(map(lambda p: get_note_at_offset(p, o1), (p1, p2)))
             n2s = list(map(lambda p: get_note_at_offset(p, o2), (p1, p2)))
-            vlq = m21vl.VoiceLeadingQuartet(n1s[0], n2s[0], n1s[1], n2s[1])
-            if fn(vlq):
-                bad_intervals.extend([
-                    {"offsets": (o1, o2), "part": p1.partAbbreviation, "msg": msg},
-                    {"offsets": (o1, o2), "part": p2.partAbbreviation, "msg": msg}
-                ])
+            if all([(n is not None) for n in n1s]) and all([(n is not None) for n in n2s]):
+                vlq = m21vl.VoiceLeadingQuartet(n1s[0], n2s[0], n1s[1], n2s[1])
+                if fn(vlq):
+                    bad_intervals.extend([
+                        {"offsets": (o1, o2), "part": p1.partAbbreviation, "msg": msg},
+                        {"offsets": (o1, o2), "part": p2.partAbbreviation, "msg": msg}
+                    ])
     return bad_intervals
 
 
@@ -265,7 +267,8 @@ def annotate_stream(issues, stream, end_height):
         if "offset" in issue.keys():
             o = issue['offset']
             note = get_note_at_offset(part, o)
-            note.addLyric(msg)
+            if note is not None:
+                note.addLyric(msg)
         if "offsets" in issue.keys():
             os = issue['offsets']
             n1 = get_note_at_offset(part, os[0])

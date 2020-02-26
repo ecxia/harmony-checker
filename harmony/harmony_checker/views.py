@@ -28,15 +28,15 @@ def index(request):
         fname = str.format('{0}/{1}', settings.MEDIA_ROOT, new_score.score.url)
         stream = converter.parse(fname)
         end_height = 1
-        for test in new_score.tests.all():
-            test_failures = getattr(voiceleading, test.func)(
+        for musical_test in new_score.musical_tests.all():
+            musical_test_failures = getattr(voiceleading, musical_test.func)(
                 stream,
                 chordified_stream=stream.chordify(),
             )
-            r = Result(score=new_score,test=test)
-            r.passed = (len(test_failures) == 0)
+            r = Result(score=new_score,musical_test=musical_test)
+            r.passed = (len(musical_test_failures) == 0)
             r.save()
-            stream, end_height = voiceleading.annotate_stream(test_failures, stream, end_height)
+            stream, end_height = voiceleading.annotate_stream(musical_test_failures, stream, end_height)
             output_path = os.path.join("{}_checked.xml".format(fname[:-4]))
             stream.write(
                 "musicxml", output_path
