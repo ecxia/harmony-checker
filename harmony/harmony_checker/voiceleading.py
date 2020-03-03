@@ -4,49 +4,62 @@ import pytest
 import itertools
 from os import path
 
+# note that most of these musical tests do not run on a part where it has a chord or a rest
 
 def get_num_parts(stream, **kwargs):
     parts = stream.getElementsByClass("Part")
-    if len(parts) < 4:
-        return [{
-            "offset": 0, "part": parts[len(parts)-1].partAbbreviation, "msg": "Not enough parts"
-        }]
-    if len(parts) > 4:
-        return [{
-            "offset": 0, "part": parts[len(parts)-1].partAbbreviation, "msg": "Too many parts"
-        }]
+    if len(parts) != 4:
+        return [
+            {
+                "offset": 0,
+                "part": parts[len(parts) - 1].partAbbreviation,
+                "msg": "Wrong # of parts",
+            }
+        ]
     return []
 
 
-# Helper function
+# Helper function; also returns a chord at offset
 def get_note_at_offset(stream, offset):
     filtered_stream = stream.flat.getElementsByOffset(
-        offsetStart=offset, offsetEnd=offset, includeElementsThatEndAtStart=False,classList=music21.note.Note,
+        offsetStart=offset,
+        offsetEnd=offset,
+        includeElementsThatEndAtStart=False,
+        classList=music21.note.Note,
     )
     notes = list(filtered_stream.notes)
     if len(notes) == 0:
         return None
-    return list(filtered_stream.notes)[0]
+    return notes[0]
 
 
-def get_missing_notes(stream, **kwargs):
-    chordified_stream = kwargs['chordified_stream']
+def get_num_notes(stream, **kwargs):
+    chordified_stream = kwargs["chordified_stream"]
     parts = stream.getElementsByClass("Part")
     chords = chordified_stream.recurse().getElementsByClass("Chord")
-    missing_note_offsets = [
-        chord.getOffsetBySite(chordified_stream.flat) 
-        for chord in chords if len(chord.pitches) < 4
-    ]
-    missing_notes = []
-    for offset in missing_note_offsets:
-        for part in parts:
-            if get_note_at_offset(part, offset) == []:
-                missing_notes.append({
-                    'offset': offset,
-                    'part': part.partAbbreviation,
-                    'msg': "Missing Note"
-                })
-    return missing_notes
+    offsets = [chord.getOffsetBySite(chordified_stream.flat) for chord in chords]
+    num_notes = []
+    for offset, part in itertools.product(offsets, parts):
+        filtered_stream = part.flat.getElementsByOffset(
+            offsetStart=offset,
+            offsetEnd=offset,
+            includeElementsThatEndAtStart=False,
+            classList=[music21.note.Note, music21.chord.Chord],
+        )
+        notes = list(filtered_stream.notes)
+        if not notes:
+            num_notes.append(
+                {"offset": offset, "part": part.partAbbreviation, "msg": "Missing Note"}
+            )
+        if list(filtered_stream.getElementsByClass("Chord")):
+            num_notes.append(
+                {
+                    "offset": offset,
+                    "part": part.partAbbreviation,
+                    "msg": "Extra Note(s)",
+                }
+            )
+    return num_notes
 
 
 def get_parts_out_of_range(stream, **kwargs):
@@ -58,29 +71,42 @@ def get_parts_out_of_range(stream, **kwargs):
     }
     parts = []
     for part in stream.getElementsByClass("Part"):
-        parts.append({
-            "stream": part,
-            "range": {"min": min(part.pitches), "max": max(part.pitches)},
-        })
-    parts = sorted(parts, key=lambda p: p["range"]["max"], reverse=True)
+        parts.append(
+            {
+                "stream": part,
+                "range": {"min": min(part.pitches), "max": max(part.pitches)},
+            }
+        )
     problems = []
     for part in parts:
         voice_range = VOICE_RANGES[part["stream"].partAbbreviation]
-        print(part["stream"].flat.notes)
-        for note in part["stream"].getElementsByClass("Note"):
-            if (note.pitch < voice_range["min"] or note.pitch > voice_range["max"]):
-                problems.append({
-                    "offset": note.getOffsetBySite(stream.flat),
-                    "part": part["stream"].partAbbreviation,
-                    "msg": "Part out of range"
-                })
+        for note in part["stream"].flat.getElementsByClass("Note"):
+            if note.pitch < voice_range["min"] or note.pitch > voice_range["max"]:
+                problems.append(
+                    {
+                        "offset": note.getOffsetBySite(stream.flat),
+                        "part": part["stream"].partAbbreviation,
+                        "msg": "Part out of Range",
+                    }
+                )
+        chords = part["stream"].flat.getElementsByClass("Chord")
+        for chord in chords:
+            if (min(chord.pitches) < voice_range["min"] or max(chord.pitches) > voice_range["max"]):
+                problems.append(
+                    {
+                        "offset": chord.getOffsetBySite(stream.flat),
+                        "part": part["stream"].partAbbreviation,
+                        "msg": "Part out of Range",
+                    }
+                )
     return problems
 
 
-# consider how to handle modulation
+# future issue: consider how to handle modulation
+# will ignore parts with chords instead of a single note; that's wrong anyways
 def get_doubled_leading_tones(stream, **kwargs):
     parts = stream.getElementsByClass("Part")
-    chordified_stream = kwargs['chordified_stream']
+    chordified_stream = kwargs["chordified_stream"]
     key = chordified_stream.analyze("key")
     bad_notes = []
     for chord in chordified_stream.recurse().getElementsByClass("Chord"):
@@ -97,58 +123,67 @@ def get_doubled_leading_tones(stream, **kwargs):
         if len(leading_tones) >= 2:
             for part in parts:
                 if get_note_at_offset(part, offset) in leading_tones:
-                    bad_notes.append({
-                        "offset": offset,
-                        "part": part.partAbbreviation,
-                        "msg": "Doubled Leading Tone"
-                    })
+                    bad_notes.append(
+                        {
+                            "offset": offset,
+                            "part": part.partAbbreviation,
+                            "msg": "Doubled Leading Tone",
+                        }
+                    )
     return bad_notes
 
 
 def get_omitted_thirds(stream, **kwargs):
     parts = stream.getElementsByClass("Part")
-    bottom_part = parts[len(parts)-1]
-    chordified_stream = kwargs['chordified_stream']
+    bottom_part = parts[len(parts) - 1]
+    chordified_stream = kwargs["chordified_stream"]
     bad_chords = []
     for chord in chordified_stream.recurse().getElementsByClass("Chord"):
         offset = chord.getOffsetBySite(chordified_stream.flat)
         if chord.getChordStep(3) is None:
-            bad_chords.append({
-                "offset": offset,
-                "part": bottom_part.partAbbreviation,
-                "msg": "Omitted Third"
-            })
+            bad_chords.append(
+                {
+                    "offset": offset,
+                    "part": bottom_part.partAbbreviation,
+                    "msg": "Omitted Third",
+                }
+            )
     return bad_chords
 
 
 # No vertical intervals between adjacent voices greater than octaves,
 # excluding bass
 def get_overspacing(stream, **kwargs):
-    chordified_stream = kwargs['chordified_stream']
+    chordified_stream = kwargs["chordified_stream"]
     parts = stream.getElementsByClass("Part")
     bad_chords = []
     for chord in chordified_stream.recurse().getElementsByClass("Chord"):
         offset = chord.getOffsetBySite(chordified_stream.flat)
-        pitches = {
-            part.partAbbreviation: get_note_at_offset(part, offset).pitch 
-            for part in parts
-        }
+        pitches = {}
+        for part in parts:
+            note = get_note_at_offset(part, offset)
+            if note:
+                pitches[part.partAbbreviation] = note.pitch
         bad_parts = set()
-        t_to_a = interval.Interval(noteStart=pitches["T."], noteEnd=pitches["A."])
-        if t_to_a.cents > 1200:
-            bad_parts.add("T.")
-            bad_parts.add("A.")            
-        a_to_s = interval.Interval(noteStart=pitches["A."], noteEnd=pitches["S."])
-        if a_to_s.cents > 1200:
-            bad_parts.add("A.")
-            bad_parts.add("S.")
+        if "T." in pitches.keys() and "A." in pitches.keys():
+            t_to_a = interval.Interval(noteStart=pitches["T."], noteEnd=pitches["A."])
+            if t_to_a.cents > 1200:
+                bad_parts.add("T.")
+                bad_parts.add("A.")
+        if "A." in pitches.keys() and "S." in pitches.keys():
+            a_to_s = interval.Interval(noteStart=pitches["A."], noteEnd=pitches["S."])
+            if a_to_s.cents > 1200:
+                bad_parts.add("A.")
+                bad_parts.add("S.")
         for part in parts:
             if part.partAbbreviation in bad_parts:
-                bad_chords.append({
-                    "offset": offset,
-                    "part": part.partAbbreviation,
-                    "msg": "Overspaced Chord"
-                })
+                bad_chords.append(
+                    {
+                        "offset": offset,
+                        "part": part.partAbbreviation,
+                        "msg": "Overspaced Chord",
+                    }
+                )
     return bad_chords
 
 
@@ -160,14 +195,16 @@ def get_melodic_aug_2(stream, **kwargs):
         for n1, n2 in zip(notes[:-1], notes[1:]):
             intvl = interval.Interval(noteStart=n1, noteEnd=n2)
             if intvl.simpleName in ("A2", "A-2"):
-                bad_intervals.append({ 
-                    'offsets': (
-                        n1.getOffsetBySite(part.flat),
-                        n2.getOffsetBySite(part.flat)
-                    ),
-                    'part': part.partAbbreviation,
-                    'msg': "Aug 2 ->"
-                })
+                bad_intervals.append(
+                    {
+                        "offsets": (
+                            n1.getOffsetBySite(part.flat),
+                            n2.getOffsetBySite(part.flat),
+                        ),
+                        "part": part.partAbbreviation,
+                        "msg": "Aug 2 ->",
+                    }
+                )
     return bad_intervals
 
 
@@ -183,28 +220,38 @@ def process_vlqs(fn, stream, chordified_stream, msg):
         for o1, o2 in zip(offsets[:-1], offsets[1:]):
             n1s = list(map(lambda p: get_note_at_offset(p, o1), (p1, p2)))
             n2s = list(map(lambda p: get_note_at_offset(p, o2), (p1, p2)))
-            if all([(n is not None) for n in n1s]) and all([(n is not None) for n in n2s]):
+            if all([(n is not None) for n in n1s]) and all(
+                [(n is not None) for n in n2s]
+            ):
                 vlq = m21vl.VoiceLeadingQuartet(n1s[0], n2s[0], n1s[1], n2s[1])
                 if fn(vlq):
-                    bad_intervals.extend([
-                        {"offsets": (o1, o2), "part": p1.partAbbreviation, "msg": msg},
-                        {"offsets": (o1, o2), "part": p2.partAbbreviation, "msg": msg}
-                    ])
+                    bad_intervals.extend(
+                        [
+                            {
+                                "offsets": (o1, o2),
+                                "part": p1.partAbbreviation,
+                                "msg": msg,
+                            },
+                            {
+                                "offsets": (o1, o2),
+                                "part": p2.partAbbreviation,
+                                "msg": msg,
+                            },
+                        ]
+                    )
     return bad_intervals
 
 
 def get_parallel_fifths(stream, **kwargs):
-    chordified_stream = kwargs['chordified_stream']
+    chordified_stream = kwargs["chordified_stream"]
     return process_vlqs(
-        lambda vlq: vlq.parallelFifth(), 
-        stream, 
-        chordified_stream, 
-        "Parallel 5ths ->"
+        lambda vlq: vlq.parallelFifth(), stream, chordified_stream, "Parallel 5ths ->"
     )
 
 
 def get_d5_to_p5(stream, **kwargs):
-    chordified_stream = kwargs['chordified_stream']
+    chordified_stream = kwargs["chordified_stream"]
+
     def helper(vlq):
         is_d5 = vlq.vIntervals[0].simpleName in ["d5", "d-5"]
         is_p5 = vlq.vIntervals[1].simpleName in ["P5", "P-5"]
@@ -215,62 +262,52 @@ def get_d5_to_p5(stream, **kwargs):
 
 # Function below inclues parallel unisons
 def get_parallel_octaves(stream, **kwargs):
-    chordified_stream = kwargs['chordified_stream']
+    chordified_stream = kwargs["chordified_stream"]
     return process_vlqs(
-        lambda vlq: vlq.parallelOctave(), 
-        stream, 
-        chordified_stream,
-        "Parallel 8ves ->"
+        lambda vlq: vlq.parallelOctave(), stream, chordified_stream, "Parallel 8ves ->"
     )
 
 
 # rewrite so focuses on outer voices
 def get_hidden_fifths(stream, **kwargs):
-    chordified_stream = kwargs['chordified_stream']
+    chordified_stream = kwargs["chordified_stream"]
     return process_vlqs(
-        lambda vlq: vlq.hiddenFifth(), 
-        stream, 
-        chordified_stream,
-        "Hidden 5ths ->"
+        lambda vlq: vlq.hiddenFifth(), stream, chordified_stream, "Hidden 5ths ->"
     )
 
 
 # rewrite so focuses on outer voices
 def get_hidden_octaves(stream, **kwargs):
-    chordified_stream = kwargs['chordified_stream']
+    chordified_stream = kwargs["chordified_stream"]
     return process_vlqs(
-        lambda vlq: vlq.hiddenOctave(), 
-        stream, 
-        chordified_stream,
-        "Hidden 8ves =>"
+        lambda vlq: vlq.hiddenOctave(), stream, chordified_stream, "Hidden 8ves ->"
     )
 
 
 # rewrite so focuses on outer voices
 def get_crossed_voices(stream, **kwargs):
-    chordified_stream = kwargs['chordified_stream']
+    chordified_stream = kwargs["chordified_stream"]
     return process_vlqs(
-        lambda vlq: vlq.voiceCrossing(), 
-        stream, 
-        chordified_stream,
-        "Crossed Voices ->"
+        lambda vlq: vlq.voiceCrossing(), stream, chordified_stream, "Crossed Voices ->"
     )
+
 
 # fix brackets
 def annotate_stream(issues, stream, end_height):
     for issue in issues:
-        msg = issue['msg']
+        msg = issue["msg"]
         part = [
-            p for p in stream.getElementsByClass("Part") 
-            if p.partAbbreviation == issue['part']
+            p
+            for p in stream.getElementsByClass("Part")
+            if p.partAbbreviation == issue["part"]
         ][0]
         if "offset" in issue.keys():
-            o = issue['offset']
+            o = issue["offset"]
             note = get_note_at_offset(part, o)
             if note is not None:
                 note.addLyric(msg)
         if "offsets" in issue.keys():
-            os = issue['offsets']
+            os = issue["offsets"]
             n1 = get_note_at_offset(part, os[0])
             n2 = get_note_at_offset(part, os[1])
             bracket = music21.spanner.Line(n1, n2, endHeight=end_height)
